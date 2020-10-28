@@ -16,5 +16,14 @@
   "bugs": {
     "url": "https://github.com/finwo/fwebc/issues"
   },
-  "homepage": "https://github.com/finwo/fwebc#readme"
+  "homepage": "https://github.com/finwo/fwebc#readme",
+  "funding": {
+    "url": "https://github.com/sponsors/finwo"
+  },
+  "keywords": [
+    "web component",
+    "web components",
+    "framework",
+    "loader"
+  ]
 }
