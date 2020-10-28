@@ -47,25 +47,33 @@
         if (template.content.firstChild instanceof HTMLTemplateElement) {
           template = template.content.firstChild;
         }
-        const shadow = this.attachShadow({ mode: 'open' });
-        shadow.appendChild(template.content);
+        this.root = this.attachShadow({ mode: 'open' });
+        this.root.appendChild(template.content);
 
         // Run plugins
         for (const plugin of plugins) {
-          plugin(shadow);
+          plugin(this);
         }
 
         // Run component code
-        (new Function([...shadow.children]
+        (new Function([...this.root.children]
           .filter(el => el instanceof HTMLScriptElement)
           .map(el => el.innerHTML)
           .join('')
-        )).call(shadow);
+        )).call(this);
 
         // Load dependencies
-        if (shadow.dependencies) {
+        if (this.dependencies) {
           dependencies.forEach(fwebc.load);
         }
+      }
+
+      update(data) {
+        Object.entries(data)
+          .forEach(([key, value]) => {
+            this.state[key] = this.isObject(this.state[key]) &&   
+            this.isObject(value) ? {...this.state[key], ...value} : value;
+          });
       }
     });
   };
