@@ -7,10 +7,10 @@
     }
   </style>
   <script>
-    this.state = {
+    this.update({
       n: 0,
-      subject: 'WORD',
-    };
+      subject: 'word',
+    });
     setInterval(() => {
       this.update({
         n: this.state.n + 1,
