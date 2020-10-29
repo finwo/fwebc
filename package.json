@@ -3,6 +3,7 @@
   "version": "0.3.0",
   "description": "",
   "main": "fwebc.js",
+  "unpkg": "fwebc.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\"",
     "postpublish": "PACKAGE_VERSION=$(cat package.json | grep \\\"version\\\" | head -1 | awk -F: '{print $2}' | sed 's/[\",]//g' | tr -d '[[:space:]]') && npm deprecate \"fwebc@<${PACKAGE_VERSION}\" \"Rolling release, please update to ${PACKAGE_VERSION}\""

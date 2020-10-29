@@ -2,3 +2,4 @@
 .github/
 .gtm/
 test/
+/minify.sh
