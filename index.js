@@ -22,7 +22,34 @@
       if ('object' !== typeof obj) return false;
       if (Array.isArray(obj)) return false;
       return true;
-    }
+    },
+    observable(obj, callback, prefix = '') {
+      if (!util.isObject(obj)) {
+        throw new Error(`Object is not an object, got: ${obj}`);
+      }
+      if ('function' !== typeof callback) {
+        throw new Error(`Callback is not a function, got: ${callback}`);
+      }
+      return new Proxy(obj, {
+        set(target, name, value, receiver) {
+          var oldVal = target[name];
+          if (oldVal === value) return;
+          let type = name in target ? 'update' : 'add';
+          const record = { name, type, object: target };
+          if (type == 'update') record.oldValue = target[name];
+          target[name] = Object(value) === value ? util.observable(value,callback,`${prefix}${name}.`) : value;
+          callback([record]);
+          return true;
+        },
+        deleteProperty(target, name, value) {
+          if (!(name in target)) return;
+          const record = { name, type: 'delete', object: target, oldValue: target[name] };
+          delete target[name];
+          callback([record]);
+          return true;
+        },
+      });
+    },
   };
 
   // Override configs
@@ -70,6 +97,7 @@
       constructor() {
         super();
 
+        // Initial state
         this.state = {};
 
         // Initialize shadow root
@@ -82,20 +110,21 @@
 
         // Run component code
         (new Function(code)).call(this);
-        this.root.innerHTML = this.render();
 
         // Load dependencies
         if (this.dependencies) {
           dependencies.forEach(fwebc.load);
         }
 
-
+        // Start observing state & initial rendering
+        this.state = util.observable(this.state, this.render.bind(this));
+        this.render();
       }
 
       render() {
         const fn = new Function(...Object.keys(this.state), "return `"+ template.replace(/`/g,'\\`') + "`;");
-        return fn(...Object.values(this.state));
-      }
+        try { this.root.innerHTML = fn(...Object.values(this.state)); } catch(e) { console.error(e); }
+      };
 
       update(data) {
         Object.entries(data)
@@ -103,7 +132,6 @@
             this.state[key] = util.isObject(this.state[key]) &&   
             util.isObject(value) ? {...this.state[key], ...value} : value;
           });
-        this.root.innerHTML = this.render();
       }
 
     });
