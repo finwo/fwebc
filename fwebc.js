@@ -23,6 +23,11 @@
       if (Array.isArray(obj)) return false;
       return true;
     },
+    unescape(input) {
+      const el = document.createElement('textarea');
+      el.innerHTML = input;
+      return el.childNodes.length === 0 ? "" : el.childNodes[0].nodeValue;
+    },
     observable(obj, callback, prefix = '') {
       if (Object(obj) !== obj) throw new Error(`Object is not an object, got: ${obj}`);
       if ('function' !== typeof callback) throw new Error(`Callback is not a function, got: ${callback}`);
@@ -90,7 +95,7 @@
     }
 
     // Template should be a string
-    template = template.innerHTML;
+    template = util.unescape(template.innerHTML);
 
     // Register the actual element
     window.customElements.define(name, class extends HTMLElement {
@@ -122,7 +127,7 @@
       }
 
       render() {
-        const fn = new Function(...Object.keys(this.state), "return `"+ template.replace(/`/g,'\\`') + "`;");
+        const fn = new Function(...Object.keys(this.state), 'return `'+template+'`;');
         try { this.root.innerHTML = fn(...Object.values(this.state)); } catch(e) { console.error(e); }
       };
 
