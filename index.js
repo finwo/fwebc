@@ -16,6 +16,15 @@
     base: '/partial',
   };
 
+  const util = fwebc.util = {
+    isObject(obj) {
+      if (null === obj) return false;
+      if ('object' !== typeof obj) return false;
+      if (Array.isArray(obj)) return false;
+      return true;
+    }
+  };
+
   // Override configs
   fwebc.cfg = cfg => {
     Object.assign(config, cfg);
@@ -37,18 +46,34 @@
   // Register a component
   fwebc.register = (name, source) => {
     if (window.customElements.get(name)) return;
+
+    // Remove nested template tags
+    let template = document.createElement('template');
+    template.innerHTML = source;
+    if (template.content.firstChild instanceof HTMLTemplateElement) {
+      template = template.content.firstChild;
+    }
+
+    // Extract scripts
+    let code = '';
+    for(const child of [...template.content.children]) {
+      if (!(child instanceof HTMLScriptElement)) continue;
+      code += child.innerHTML;
+      template.content.removeChild(child);
+    }
+
+    // Template should be a string
+    template = template.innerHTML;
+
+    // Register the actual element
     window.customElements.define(name, class extends HTMLElement {
       constructor() {
         super();
 
-        // Build shadowroot
-        let template = document.createElement('template');
-        template.innerHTML = source;
-        if (template.content.firstChild instanceof HTMLTemplateElement) {
-          template = template.content.firstChild;
-        }
+        this.state = {};
+
+        // Initialize shadow root
         this.root = this.attachShadow({ mode: 'open' });
-        this.root.appendChild(template.content);
 
         // Run plugins
         for (const plugin of plugins) {
@@ -56,25 +81,31 @@
         }
 
         // Run component code
-        (new Function([...this.root.children]
-          .filter(el => el instanceof HTMLScriptElement)
-          .map(el => el.innerHTML)
-          .join('')
-        )).call(this);
+        (new Function(code)).call(this);
+        this.root.innerHTML = this.render();
 
         // Load dependencies
         if (this.dependencies) {
           dependencies.forEach(fwebc.load);
         }
+
+
+      }
+
+      render() {
+        const fn = new Function(...Object.keys(this.state), "return `"+ template.replace(/`/g,'\\`') + "`;");
+        return fn(...Object.values(this.state));
       }
 
       update(data) {
         Object.entries(data)
           .forEach(([key, value]) => {
-            this.state[key] = this.isObject(this.state[key]) &&   
-            this.isObject(value) ? {...this.state[key], ...value} : value;
+            this.state[key] = util.isObject(this.state[key]) &&   
+            util.isObject(value) ? {...this.state[key], ...value} : value;
           });
+        this.root.innerHTML = this.render();
       }
+
     });
   };
 
