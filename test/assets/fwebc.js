@@ -1,1 +1,1 @@
-../../index.js
+../../fwebc.js
