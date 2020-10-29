@@ -61,18 +61,30 @@ registered.
 Loads the template identified by the given name, surrounded by the configured
 `base` and `ext`, and registers it.
 
+### component.render()
+
+Re-renders the component the function is called on as a template literal, using
+`component.state` as it's data input.
+
 ## Templates
 
-Loaded templates are attached to elements as shadow roots, with the addition of
-all top-layer script tags being executed having the shadow root as their `this`
-variable.
+Loaded templates are attached to elements as shadow roots after being rendered
+as template literals using your template's `.state` property as data input.
+Top-level script tags are all merged together and are used as the initialization
+code for your custom element (`this` = the element, `.root` = shadow root).
 
-Data binding is not included by default, but is easily added by including a
-module like [rivets](https://www.npmjs.com/package/rivets) and installing it
-like a plugin as follows:
+Basic data-binding is supported. In your template, during initialization (so in
+the root of your scripts), you're allowed to overwrite the `this.state`
+property. Do **NOT** overwrite this property after initialization or the binding
+will cease to work. The template will be re-rendered whenever your state
+updates.
+
+More advanced data-binding can be added by including a package like
+[rivets](https://www.npmjs.com/package/rivets) and installing it like a plugin
+as follows:
 
 ```js
 fwebc.install(component => {
-  rivets.bind(component, component);
+  rivets.bind(component.root, component.state);
 });
 ```

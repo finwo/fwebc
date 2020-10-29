@@ -24,11 +24,11 @@
       return true;
     },
     observable(obj, callback, prefix = '') {
-      if (!util.isObject(obj)) {
-        throw new Error(`Object is not an object, got: ${obj}`);
-      }
-      if ('function' !== typeof callback) {
-        throw new Error(`Callback is not a function, got: ${callback}`);
+      if (Object(obj) !== obj) throw new Error(`Object is not an object, got: ${obj}`);
+      if ('function' !== typeof callback) throw new Error(`Callback is not a function, got: ${callback}`);
+      for(const key of Object.keys(obj)) {
+        if (Object(obj[key]) !== obj[key]) continue;
+        obj[key] = util.observable(obj[key], callback, `${prefix}${key}.`);
       }
       return new Proxy(obj, {
         set(target, name, value, receiver) {
@@ -125,14 +125,6 @@
         const fn = new Function(...Object.keys(this.state), "return `"+ template.replace(/`/g,'\\`') + "`;");
         try { this.root.innerHTML = fn(...Object.values(this.state)); } catch(e) { console.error(e); }
       };
-
-      update(data) {
-        Object.entries(data)
-          .forEach(([key, value]) => {
-            this.state[key] = util.isObject(this.state[key]) &&   
-            util.isObject(value) ? {...this.state[key], ...value} : value;
-          });
-      }
 
     });
   };
