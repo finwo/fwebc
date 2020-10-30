@@ -102,6 +102,7 @@
     let code = '';
     for(const child of [...template.content.children]) {
       if (!(child instanceof HTMLScriptElement)) continue;
+      if (child.getAttribute('src')) continue;
       code += child.innerHTML;
       template.content.removeChild(child);
     }
