@@ -79,11 +79,23 @@
   fwebc.register = (name, source) => {
     if (window.customElements.get(name)) return;
 
-    // Remove nested template tags
+    // Parse remplate
     let template = document.createElement('template');
     template.innerHTML = source;
-    if (template.content.firstChild instanceof HTMLTemplateElement) {
+
+    // Remove template wrapper
+    while(
+      (template.content.children.length == 1) &&
+      (template.content.firstChild instanceof HTMLTemplateElement)
+    ) {
       template = template.content.firstChild;
+    }
+
+    // Remove template wrapper around html section
+    if (template.content.firstChild instanceof HTMLTemplateElement) {
+      const wrapper = template.content.firstChild;
+      template.content.prepend(...wrapper.content.children);
+      template.content.removeChild(wrapper);
     }
 
     // Extract scripts
