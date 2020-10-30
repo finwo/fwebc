@@ -6,18 +6,18 @@
       <li>I'm item ${i}</li>
     `).join('')}
   </ul>
-  <style>
-    h2 {
-      color: #555;
-    }
-  </style>
-  <script>
-    this.state = {
-      n      : 0,
-      subject: 'word',
-    };
-    setInterval(() => {
-      this.state.n++;
-    }, 1000);
-  </script>
 </template>
+<style>
+  h2 {
+    color: #555;
+  }
+</style>
+<script>
+  this.state = {
+    n      : 0,
+    subject: 'word',
+  };
+  setInterval(() => {
+    this.state.n++;
+  }, 1000);
+</script>
