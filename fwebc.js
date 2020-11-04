@@ -149,7 +149,7 @@
 
   // Load a component
   fwebc.load = name => {
-    fetch(`${config.base}/${name}.${config.ext}`)
+    fetch(`${config.base}/${name.replace(/-/g,'/')}.${config.ext}`)
       .then(res => res.text())
       .then(source => {
         fwebc.register(name, source);
