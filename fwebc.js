@@ -131,7 +131,7 @@
 
         // Load dependencies
         if (this.dependencies) {
-          dependencies.forEach(fwebc.load);
+          this.dependencies.forEach(fwebc.load);
         }
 
         // Start observing state & initial rendering
