@@ -132,14 +132,24 @@
         }
 
         // Start observing state & initial rendering
-        this.state = util.observable(this.state, this.render.bind(this));
+        this.state = util.observable(this.state, () => this.emit('update'));
+        this.on('update', this.render.bind(this));
         this.render();
       }
 
       render() {
         const fn = new Function(...Object.keys(this.state), 'return `'+template+'`;');
         try { this.innerHTML = fn(...Object.values(this.state)); } catch(e) { console.error(e); }
-      };
+      }
+
+      emit(event, data = {}) {
+        const ev = new CustomEvent(event, data);
+        this.dispatchEvent(ev);
+      }
+
+      on(event, handler) {
+        this.addEventListener(event, handler);
+      }
 
     });
   };
