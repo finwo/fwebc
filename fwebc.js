@@ -115,6 +115,9 @@
       constructor() {
         super();
 
+        // Initialize shadow root
+        this.root = this.attachShadow({ mode: 'open' });
+
         // Initial state
         this.state = {};
 
@@ -139,7 +142,12 @@
 
       render() {
         const fn = new Function(...Object.keys(this.state), 'return `'+template+'`;');
-        try { this.innerHTML = fn(...Object.values(this.state)); } catch(e) { console.error(e); }
+        const styles = Array.from(this.root.ownerDocument.styleSheets).map(stylesheet => stylesheet.ownerNode.outerHTML);
+        try {
+          this.root.innerHTML = styles.join('') + fn(...Object.values(this.state));
+        } catch(e) {
+          console.error(e);
+        }
       }
 
       emit(event, data = {}) {
