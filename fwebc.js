@@ -118,9 +118,6 @@
         // Initial state
         this.state = {};
 
-        // Initialize shadow root
-        this.root = this.attachShadow({ mode: 'open' });
-
         // Run plugins
         for (const plugin of plugins) {
           plugin(this);
@@ -141,7 +138,7 @@
 
       render() {
         const fn = new Function(...Object.keys(this.state), 'return `'+template+'`;');
-        try { this.root.innerHTML = fn(...Object.values(this.state)); } catch(e) { console.error(e); }
+        try { this.innerHTML = fn(...Object.values(this.state)); } catch(e) { console.error(e); }
       };
 
     });
