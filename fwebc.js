@@ -118,7 +118,7 @@
           .map(stylesheet => stylesheet.ownerNode.outerHTML)
           .concat(styles.map(stylesheet => stylesheet.outerHTML));
         try {
-          this.root.innerHTML = stylez.join('') + fn(...Object.values(this.state));
+          this.root.innerHTML = stylez.join('') + fn.call(this, ...Object.values(this.state));
         } catch(e) {
           console.error(e);
         }
