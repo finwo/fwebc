@@ -17,12 +17,6 @@
   };
 
   const util = fwebc.util = {
-    isObject(obj) {
-      if (null === obj) return false;
-      if ('object' !== typeof obj) return false;
-      if (Array.isArray(obj)) return false;
-      return true;
-    },
     unescape(input) {
       const el = document.createElement('textarea');
       el.innerHTML = input;
@@ -80,85 +74,62 @@
     if (window.customElements.get(name)) return;
 
     // Parse remplate
-    let template = document.createElement('template');
-    template.innerHTML = source;
+    const wrapper = document.createElement('template');
+    wrapper.innerHTML = source;
 
-    // Remove template wrapper
-    while(
-      (template.content.children.length == 1) &&
-      (template.content.firstChild instanceof HTMLTemplateElement)
-    ) {
-      template = template.content.firstChild;
+    // Separate style, script & template
+    let template = null;
+    let scripts  = [];
+    let styles   = [];
+    for(const node of [...wrapper.content.children]) {
+      if (node instanceof HTMLTemplateElement) template = node;
+      if (node instanceof HTMLScriptElement  ) {scripts.push(node);wrapper.content.removeChild(node);}
+      if (node instanceof HTMLStyleElement   ) {styles.push(node);wrapper.content.removeChild(node);}
+    }
+    if (!template) {
+      template = wrapper;
     }
 
-    // Remove template wrapper around html section
-    if (template.content.firstChild instanceof HTMLTemplateElement) {
-      const wrapper = template.content.firstChild;
-      template.content.prepend(...wrapper.content.children);
-      template.content.removeChild(wrapper);
-    }
-
-    // Extract scripts
-    let code = '';
-    for(const child of [...template.content.children]) {
-      if (!(child instanceof HTMLScriptElement)) continue;
-      if (child.getAttribute('src')) continue;
-      code += child.innerHTML;
-      template.content.removeChild(child);
-    }
-
-    // Template should be a string
+    // Convert template and code into a string
     template = util.unescape(template.innerHTML);
+    let code = '';
+    for(const script of scripts) {
+      if (script.getAttribute('src')) continue;
+      code += script.innerHTML;
+    }
 
     // Register the actual element
     window.customElements.define(name, class extends HTMLElement {
       constructor() {
         super();
-
-        // Initialize shadow root
-        this.root = this.attachShadow({ mode: 'open' });
-
-        // Initial state
+        this.root  = this.attachShadow({ mode: 'open' });
         this.state = {};
-
-        // Run plugins
-        for (const plugin of plugins) {
-          plugin(this);
-        }
-
-        // Run component code
+        for(const plugin of plugins) plugin(this);
         (new Function(code)).call(this);
-
-        // Load dependencies
-        if (this.dependencies) {
-          this.dependencies.forEach(fwebc.load);
-        }
-
-        // Start observing state & initial rendering
+        if (this.dependencies) this.dependencies.forEach(fwebc.load);
         this.state = util.observable(this.state, () => this.emit('update'));
         this.on('update', this.render.bind(this));
         this.render();
       }
-
       render() {
         const fn = new Function(...Object.keys(this.state), 'return `'+template+'`;');
-        const styles = Array.from(this.root.ownerDocument.styleSheets).map(stylesheet => stylesheet.ownerNode.outerHTML);
+        const stylez = Array
+          .from(this.root.ownerDocument.styleSheets)
+          .map(stylesheet => stylesheet.ownerNode.outerHTML)
+          .concat(styles.map(stylesheet => stylesheet.outerHTML));
         try {
-          this.root.innerHTML = styles.join('') + fn(...Object.values(this.state));
+          this.root.innerHTML = stylez.join('') + fn(...Object.values(this.state));
         } catch(e) {
           console.error(e);
         }
       }
-
       emit(event, data = {}) {
         const ev = new CustomEvent(event, data);
         this.dispatchEvent(ev);
       }
-
       on(event, handler) {
         this.addEventListener(event, handler);
       }
-
     });
   };
 
